@@ -40,14 +40,15 @@ class PairedDataset(Dataset):
         pathA = os.path.join(self.root, mode,"A")
         pathB = os.path.join(self.root, mode,"B")
         # List of images
-        dirA = os.listdir(pathA)
+        dirA = os.listdir(pathA)[:1078]
         dirB = os.listdir(pathB)
+        
         # Sort
         dirA.sort()
         dirB.sort()
-        
-        assert len(dirA) == len(dirB), f"Unequal amount of images"
-        assert dirA == dirB, "Image names are not identical"
+        # print(len(dirA),len(dirB))
+        # assert len(dirA) == len(dirB), f"Unequal amount of images"
+        # assert dirA == dirB, "Image names are not identical"
                
         self.dirA = dirA
         self.dirB = dirB

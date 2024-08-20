@@ -6,13 +6,13 @@ config = {}
 ###################################
 
 #### START EDITING FROM HERE ######
-config['data_path'] = "D:/Zakaria/3T to 7T MRI/content/Data" # Path for the images
+config['data_path'] = "/content/drive/MyDrive/Dataset/Datalast" # Path for the images
 config['model_name'] = "D:/Zakaria/3T to 7T MRI/content/ResultSumon"   # choose a unique name for result folder 
 config['resume_ckpt'] = None          # name of the checkpoint from which you want to resume. Otherwise None.
 config['paired'] = True                     # For Aligned task set to True. Otherwise False    
 
 config['batch_size']  = 1                   # batch size, Change to fit hardware
-# config['n_epochs']  = 200 # old system
+config['n_epochs']  = 1 # old system
 config['n_lin_epoch'] = 100                 # number of epoch for linear learning rate
 config['n_dec_epoch'] = 100                 # number of epoch for learning rate to decay
 # total epoch =  n_lin_epoch + n_dec_epoch

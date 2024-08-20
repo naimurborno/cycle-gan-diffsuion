@@ -17,6 +17,7 @@ from metrics import get_metric_class, calc_metric
 class CycleGan(pl.LightningModule):
     def __init__(self, config):
         super().__init__()
+        self.automatic_optimization = False #this has been changed due to automatic optimizer problem.
         self.save_hyperparameters()
         self.config = config
         # Set metrics
@@ -173,18 +174,32 @@ class CycleGan(pl.LightningModule):
         self.log('mse_fake_B', mseFakeB.item(), on_step=True, on_epoch=True, prog_bar=False, logger=True)
         return self.disLoss
     
-    def training_step(self, batch, batch_idx, optimizer_idx):
-        imgA, imgB = batch['A'], batch['B']
-        if optimizer_idx == 0:
-            if batch_idx in [5,105,205,305,505]:
-                self.save_image(batch, batch_idx)
-        discriminator_requires_grad = (optimizer_idx==1)
-        set_requires_grad([self.disX, self.disY], discriminator_requires_grad)
-        
-        if optimizer_idx == 0:
-            return self.generator_training_step(imgA, imgB)
-        else:
-            return self.discriminator_training_step(imgA, imgB)
+    def training_step(self, batch, batch_idx):  
+      imgA, imgB = batch['A'], batch['B']
+
+      # Get the optimizers
+      optG, optD = self.optimizers()
+
+      # Generator step
+      set_requires_grad([self.disX, self.disY], False)  # Freeze discriminators
+      gen_loss = self.generator_training_step(imgA, imgB)
+      optG.zero_grad()
+      self.manual_backward(gen_loss)
+      optG.step()
+
+      # Discriminator step
+      set_requires_grad([self.disX, self.disY], True)  # Unfreeze discriminators
+      dis_loss = self.discriminator_training_step(imgA, imgB)
+      optD.zero_grad()
+      self.manual_backward(dis_loss)
+      optD.step()
+
+      # Log losses
+      # self.log('gen_loss', gen_loss, on_step=True, on_epoch=True, prog_bar=True, logger=True)
+      # self.log('dis_loss', dis_loss, on_step=True, on_epoch=True, prog_bar=True, logger=True)
+
+      return {"loss": gen_loss + dis_loss}
+
         
     def save_image(self, batch, batch_idx):
         imgA, imgB = batch['A'], batch['B']
