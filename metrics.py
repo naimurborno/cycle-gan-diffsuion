@@ -14,6 +14,8 @@ def get_metric_class(metric_name: str):
         NotImplementedError(f"{metric_name} is not implemented")
 
 def calc_metric(metric, metric_name: str, fake_image: torch.Tensor, real_image: torch.Tensor):
+    if fake_image.ndim!=4:
+      fake_image=fake_image.unsqueeze(0)
     if metric_name == 'fid':
         metric.update(real_image, real=True)
         metric.update(fake_image, real=False)

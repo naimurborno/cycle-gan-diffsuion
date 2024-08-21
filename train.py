@@ -15,6 +15,7 @@ from PairedDataset import PairedDataset
 #from JoinedPairedDataset import PairedDataset
 from cyclegan_models import CycleGan
 from utils import plot_graph, tflog2pandas, get_proper_df
+from tqdm import tqdm
 
 # Filter the warning.
 import warnings
@@ -87,7 +88,7 @@ if __name__ == "__main__":
     )
 
     # Train Model
-    trainer.fit(model, train_dl, ckpt_path=resume_ckpt)
+    tqdm(trainer.fit(model, train_dl, ckpt_path=resume_ckpt))
     # print (trainer.profiler.summary()) # Enable if needed
 
     # Copy config file

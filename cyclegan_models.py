@@ -5,8 +5,11 @@ from torch.optim.lr_scheduler import LambdaLR
 from torch.nn import functional as F
 import itertools
 import pytorch_lightning as pl
+from diffusers import StableDiffusionImg2ImgPipeline
 import numpy as np
 from PIL import Image
+from tqdm import tqdm
+import logging
 import os
 
 from generator import get_generator
@@ -20,6 +23,16 @@ class CycleGan(pl.LightningModule):
         self.automatic_optimization = False #this has been changed due to automatic optimizer problem.
         self.save_hyperparameters()
         self.config = config
+
+        #stable diffusion
+        self.sd_pipeline = StableDiffusionImg2ImgPipeline.from_pretrained("CompVis/stable-diffusion-v1-4")
+        self.sd_pipeline.safety_checker=None
+        # self.sd_pipeline.set_logging_level(logging.ERROR) 
+        self.sd_pipeline.to(self.config['device'])  # Ensure the model is on the correct device
+
+
+
+
         # Set metrics
         metric_list = config['metrics']        
         self.metric_list = [metric.lower() for metric in metric_list] # Lower it just incase
@@ -84,7 +97,21 @@ class CycleGan(pl.LightningModule):
             target = torch.zeros_like(predictions)
         
         return F.l1_loss(predictions, target)
-            
+    def refine_with_stable_diffusion(self, image_tensor):
+        # Convert the tensor to a PIL image for Stable Diffusion
+        pil_image = self.toImage(image_tensor)
+        # Use Stable Diffusion to refine the image
+        with torch.no_grad():
+            refined_image = self.sd_pipeline(
+                prompt="",
+                image=pil_image,  # This is the input image
+                num_inference_steps=10,
+                strength=0.75,  # Control the strength of diffusion, higher is more transformed
+                guidance_scale=7.5  # Control adherence to the original image
+            ).images[0]
+        # Convert the refined image back to a tensor
+        refined_tensor = self.image_to_tensor(refined_image).to(self.config['device'])
+        return refined_tensor        
     def generator_training_step(self, imgA, imgB):        
         """cycle images - using only generator nets"""
         fakeB = self.genX(imgA)
@@ -103,6 +130,10 @@ class CycleGan(pl.LightningModule):
         # generator genY must fool discrim disX so label is real
         predFakeA = self.disX(fakeA)
         mseGenA = self.get_mse_loss(predFakeA, 'real')
+        
+        #stable diffusion post-processing
+        fakeB = self.refine_with_stable_diffusion(fakeB)
+        fakeA = self.refine_with_stable_diffusion(fakeA)
         
         # compute extra losses
         if self.config['identity_loss'] == "mae_loss": 
@@ -221,13 +252,22 @@ class CycleGan(pl.LightningModule):
             os.makedirs(image_dir, exist_ok = True)
             new_image.save(os.path.join(image_dir,f'{batch_idx:05d}_{i}.png'))
 
-    def toImage(self, x):
-        # converts tensor in range [-1,1] to a pil image
-        x = x.clone().detach().cpu().numpy()
-        x = np.transpose(x, (1,2,0))
-        x = (x + 1)*127.5
-        x = x.astype('uint8')
-        return Image.fromarray(x)
+    def toImage(self, x):#(this function has been changed)
+        if x.ndim == 4:
+          x = x.squeeze(0)  # Remove batch dimension if present
+    # Ensure x has 3 dimensions
+        if x.ndim == 3:
+            x = x.clone().detach().cpu().numpy()
+            x = np.transpose(x, (1, 2, 0))  # Convert from (C, H, W) to (H, W, C)
+            x = (x + 1) * 127.5
+            x = x.astype('uint8')
+            return Image.fromarray(x)
+        else:
+            raise ValueError(f"Unexpected tensor shape: {x.shape}")
+    def image_to_tensor(self, image):
+        image = np.array(image).astype(np.float32) / 127.5 - 1.0
+        image = torch.from_numpy(image).permute(2, 0, 1)
+        return image
 
     def compute_metrics(self, imgA: torch.Tensor, imgB: torch.Tensor, fakeB: torch.Tensor, fakeA: torch.Tensor):
         # Convert to [0, 255] for calculation

@@ -6,7 +6,7 @@ config = {}
 ###################################
 
 #### START EDITING FROM HERE ######
-config['data_path'] = "/content/drive/MyDrive/Dataset/Datalast" # Path for the images
+config['data_path'] = "/content/drive/MyDrive/Datalast" # Path for the images
 config['model_name'] = "D:/Zakaria/3T to 7T MRI/content/ResultSumon"   # choose a unique name for result folder 
 config['resume_ckpt'] = None          # name of the checkpoint from which you want to resume. Otherwise None.
 config['paired'] = True                     # For Aligned task set to True. Otherwise False    
