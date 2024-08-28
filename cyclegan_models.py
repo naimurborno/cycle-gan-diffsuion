@@ -29,6 +29,8 @@ class CycleGan(pl.LightningModule):
         self.sd_pipeline.safety_checker=None
         # self.sd_pipeline.set_logging_level(logging.ERROR) 
         self.sd_pipeline.to(self.config['device'])  # Ensure the model is on the correct device
+        self.sd_pipeline.set_progress_bar_config(leave=False)
+        self.sd_pipeline.set_progress_bar_config(disable=True)
 
 
 
@@ -160,11 +162,11 @@ class CycleGan(pl.LightningModule):
         self.log('_id_loss', identityLoss.item(), on_step=False, on_epoch=True, prog_bar=True, logger=False)
         self.log('_cyc_loss', cycleLoss.item(), on_step=False, on_epoch=True, prog_bar=True, logger=False)
         # CSV Logging
-        self.log('gen_loss', self.genLoss.item(), on_step=True, on_epoch=True, prog_bar=False, logger=True)
-        self.log('id_loss', identityLoss.item(), on_step=True, on_epoch=True, prog_bar=False, logger=True)
-        self.log('cyc_loss', cycleLoss.item(), on_step=True, on_epoch=True, prog_bar=False, logger=True)
-        self.log('gen_A_loss', mseGenA.item(), on_step=True, on_epoch=True, prog_bar=False, logger=True)
-        self.log('gen_B_loss', mseGenB.item(), on_step=True, on_epoch=True, prog_bar=False, logger=True)
+        self.log('gen_loss', self.genLoss.item(), on_step=False, on_epoch=True, prog_bar=False, logger=True)
+        self.log('id_loss', identityLoss.item(), on_step=False, on_epoch=True, prog_bar=False, logger=True)
+        self.log('cyc_loss', cycleLoss.item(), on_step=False, on_epoch=True, prog_bar=False, logger=True)
+        self.log('gen_A_loss', mseGenA.item(), on_step=False, on_epoch=True, prog_bar=False, logger=True)
+        self.log('gen_B_loss', mseGenB.item(), on_step=False, on_epoch=True, prog_bar=False, logger=True)
         # Compute and log Metrics
         if self.metric_list: # only compute if list is not empty
             self.compute_metrics(imgA, imgB, fakeB, fakeA)
