@@ -90,9 +90,12 @@ if __name__ == "__main__":
             imgA, imgB = batch['A'].to('cuda'), batch['B'].to('cuda')        
             with torch.no_grad():
                 fakeB = model.genX(imgA)
-                fakeB=refine_with_stable_diffusion(fakeB)
-                fakeA = model.genY(imgB)
-                fakeA=refine_with_stable_diffusion(fakeA)
+                # fakeB=refine_with_stable_diffusion(fakeB)
+                # fakeB=fakeB.unsqueeze(0) 
+                fakeA = model.genY(imgB) 
+                # fakeA=refine_with_stable_diffusion(fakeA)
+                # fakeA=fakeA.unsqueeze(0) 
+                # print(fakeA.shape)
 
             # Convert back to cpu for saving image
             imgA, imgB, fakeB, fakeA = imgA.cpu(), imgB.cpu(), fakeB.cpu(), fakeA.cpu()

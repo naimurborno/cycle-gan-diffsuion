@@ -127,13 +127,18 @@ def plot_graph(x, y, xlabel, ylabel, title, save_path):
     plt.savefig(save_path, dpi=100)
 
 
-def toImage(x):
-    # converts tensor in range [-1,1] to a pil image
-    x = x.numpy()
-    x = np.transpose(x, (1, 2, 0))
-    x = (x + 1) * 127.5
-    x = x.astype("uint8")
-    return Image.fromarray(x)
+def toImage(x):#(this function has been changed)
+    if x.ndim == 4:
+      x = x.squeeze(0)  # Remove batch dimension if present
+    # Ensure x has 3 dimensions
+    if x.ndim == 3:
+      x = x.clone().detach().cpu().numpy()
+      x = np.transpose(x, (1, 2, 0))  # Convert from (C, H, W) to (H, W, C)
+      x = (x + 1) * 127.5
+      x = x.astype('uint8')
+      return Image.fromarray(x)
+    else:
+      raise ValueError(f"Unexpected tensor shape: {x.shape}")
 
 def convert_to_255(x:torch.Tensor):
     x = (x+1) * 127.5 # convert from [-1,1] to [0,255]
@@ -160,13 +165,13 @@ def save_paired_image(imgA, imgB, fakeB, fakeA, path):
 def save_unpaired_image(imgA, fakeB, path):
     [imgA, fakeB] = [[toImage(f) for f in X] for X in [imgA, fakeB]]
 
-    new_image = Image.new(
-        "RGB", (2 * imgA[0].size[0], imgA[0].size[0]), (250, 250, 250)
-    )
-    new_image.paste(imgA[0], (0, 0))
-    new_image.paste(fakeB[0], (imgA[0].size[0], 0))
+    # new_image = Image.new(
+    #     "RGB", (2 * imgA[0].size[0], imgA[0].size[0]), (250, 250, 250)
+    # )
+    # new_image.paste(imgA[0], (0, 0))
+    # new_image.paste(fakeB[0], (imgA[0].size[0], 0))
 
-    new_image.save(path)
+    fakeB[0].save(path)
 # def save_unpaired_image(fakeB, path):
 #     # Convert fakeB images to PIL Image objects
 #     fakeB = [toImage(f) for f in fakeB]
