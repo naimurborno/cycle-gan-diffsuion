@@ -7,17 +7,17 @@ from torchvision import transforms
 
 
 data_transforms = {
-    'Train': transforms.Compose([
+    'train': transforms.Compose([
         transforms.Resize([256,256]),
         transforms.ToTensor(),
         transforms.Normalize([.5, .5, .5], [.5, .5, .5])
     ]),
-    'Test': transforms.Compose([
+    'test': transforms.Compose([
         transforms.Resize([256,256]),
         transforms.ToTensor(),
         transforms.Normalize([.5, .5, .5], [.5, .5, .5])
     ]),
-    'Val': transforms.Compose([
+    'val': transforms.Compose([
     transforms.Resize([256,256]),
     transforms.ToTensor(),
     transforms.Normalize([.5, .5, .5], [.5, .5, .5])
@@ -30,17 +30,17 @@ class PairedDataset(Dataset):
         root must have trainA trainB testA testB as its subfolders
         mode must be either 'train' or 'test'
         """
-        assert mode in 'Train Test Val'.split(), 'mode should be either train or test'
+        assert mode in 'train test val'.split(), 'mode should be either train or test'
         
         super().__init__()
         self.root = root
         self.mode = mode
         self.transforms = data_transforms[mode]
         # Paths
-        pathA = os.path.join(self.root, mode,"A")
-        pathB = os.path.join(self.root, mode,"B")
+        pathA = os.path.join(self.root, mode,"T1-images")
+        pathB = os.path.join(self.root, mode,"T2-images")
         # List of images
-        dirA = os.listdir(pathA)[:1078]
+        dirA = os.listdir(pathA)
         dirB = os.listdir(pathB)
         
         # Sort
@@ -66,8 +66,8 @@ class PairedDataset(Dataset):
     
     def __getitem__(self, idx): #doesnt support slices, we dont want them
         # we use serial batching
-        pathA, imgA = self.load_image("A",self.dirA[idx])
-        pathB, imgB = self.load_image("B",self.dirB[idx])
+        pathA, imgA = self.load_image("T1-images",self.dirA[idx])
+        pathB, imgB = self.load_image("T2-images",self.dirB[idx])
         return {
             'A': imgA, 'pathA': pathA,
             'B': imgB, 'pathB': pathB

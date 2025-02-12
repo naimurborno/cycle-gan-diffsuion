@@ -1,6 +1,6 @@
 # train.py
 # Imports
-from torch.utils.data import DataLoader
+from torch.utils.data import DataLoader,random_split
 import torch
 import pytorch_lightning as pl
 from pytorch_lightning.callbacks import ModelCheckpoint
@@ -41,11 +41,19 @@ if __name__ == "__main__":
         raise NotImplementedError("Metrics for Unpaired Data are not implemented.")
     # Set paired or unpaired
     if config["paired"]:
-        train_ds = PairedDataset(root, "Train")
+        train_ds = PairedDataset(root, "train")
     else:
-        train_ds = UnpairedDataset(root, "Train")
+        train_ds = UnpairedDataset(root, "train")
     # Create Loader
-    train_dl = DataLoader(train_ds, batch_size=config["batch_size"], shuffle=False)
+    # train_dl = DataLoader(train_ds, batch_size=config["batch_size"], shuffle=False)
+    train_size = int(0.8 * len(train_ds))
+    val_size = len(train_ds) - train_size  # Remaining for validation
+
+    train_subset, val_subset = random_split(train_ds, [train_size, val_size])
+
+    train_dl = DataLoader(train_subset, batch_size=config["batch_size"], shuffle=True)  # Shuffle for training
+    val_dl = DataLoader(val_subset, batch_size=config["batch_size"], shuffle=False)     # No shuffle for validation
+
 
     # Resuming Check; disabled `global_step_offset` now
     if config["resume_ckpt"] is not None:
@@ -88,7 +96,7 @@ if __name__ == "__main__":
     )
 
     # Train Model
-    tqdm(trainer.fit(model, train_dl, ckpt_path=resume_ckpt))
+    tqdm(trainer.fit(model, train_dl, val_dl, ckpt_path=resume_ckpt))
     # print (trainer.profiler.summary()) # Enable if needed
 
     # Copy config file

@@ -25,12 +25,12 @@ class CycleGan(pl.LightningModule):
         self.config = config
 
         #stable diffusion
-        self.sd_pipeline = StableDiffusionImg2ImgPipeline.from_pretrained("CompVis/stable-diffusion-v1-4")
-        self.sd_pipeline.safety_checker=None
-        # self.sd_pipeline.set_logging_level(logging.ERROR) 
-        self.sd_pipeline.to(self.config['device'])  # Ensure the model is on the correct device
-        self.sd_pipeline.set_progress_bar_config(leave=False)
-        self.sd_pipeline.set_progress_bar_config(disable=True)
+        # self.sd_pipeline = StableDiffusionImg2ImgPipeline.from_pretrained("CompVis/stable-diffusion-v1-4")
+        # self.sd_pipeline.safety_checker=None
+        # # self.sd_pipeline.set_logging_level(logging.ERROR) 
+        # self.sd_pipeline.to(self.config['device'])  # Ensure the model is on the correct device
+        # self.sd_pipeline.set_progress_bar_config(leave=False)
+        # self.sd_pipeline.set_progress_bar_config(disable=True)
 
 
 
@@ -134,8 +134,8 @@ class CycleGan(pl.LightningModule):
         mseGenA = self.get_mse_loss(predFakeA, 'real')
         
         #stable diffusion post-processing
-        fakeB = self.refine_with_stable_diffusion(fakeB)
-        fakeA = self.refine_with_stable_diffusion(fakeA)
+        # fakeB = self.refine_with_stable_diffusion(fakeB)
+        # fakeA = self.refine_with_stable_diffusion(fakeA)
         
         # compute extra losses
         if self.config['identity_loss'] == "mae_loss": 
@@ -234,6 +234,61 @@ class CycleGan(pl.LightningModule):
       return {"loss": gen_loss + dis_loss}
 
         
+    def validation_step(self, batch, batch_idx):
+      imgA, imgB = batch['A'], batch['B']
+
+      # Generator validation
+      fakeB = self.genX(imgA)
+      cycledA = self.genY(fakeB)
+
+      fakeA = self.genY(imgB)
+      cycledB = self.genX(fakeA)
+
+      sameB = self.genX(imgB)
+      sameA = self.genY(imgA)
+
+      # Compute losses
+      predFakeB = self.disY(fakeB)
+      mseGenB = self.get_mse_loss(predFakeB, 'real')
+
+      predFakeA = self.disX(fakeA)
+      mseGenA = self.get_mse_loss(predFakeA, 'real')
+
+      if self.config['identity_loss'] == "mae_loss": 
+          identityLoss = F.l1_loss(sameA, imgA) + F.l1_loss(sameB, imgB)
+      elif self.config['identity_loss'] == "mse_loss": 
+          identityLoss = F.mse_loss(sameA, imgA) + F.mse_loss(sameB, imgB)
+
+      if self.config['cyc_loss'] == "mae_loss": 
+          cycleLoss = F.l1_loss(cycledA, imgA) + F.l1_loss(cycledB, imgB)
+      elif self.config['cyc_loss'] == "mse_loss": 
+          cycleLoss = F.mse_loss(cycledA, imgA) + F.mse_loss(cycledB, imgB)
+
+      extraLoss = cycleLoss + 0.5 * identityLoss
+      val_gen_loss = mseGenA + mseGenB + self.lm * extraLoss
+
+      # Discriminator validation
+      predRealA = self.disX(imgA)
+      mseRealA = self.get_mse_loss(predRealA, 'real')
+
+      predFakeA = self.disX(fakeA)
+      mseFakeA = self.get_mse_loss(predFakeA, 'fake')
+
+      predRealB = self.disY(imgB)
+      mseRealB = self.get_mse_loss(predRealB, 'real')
+
+      predFakeB = self.disY(fakeB)
+      mseFakeB = self.get_mse_loss(predFakeB, 'fake')
+
+      val_dis_loss = 0.5 * (mseFakeA + mseRealA + mseFakeB + mseRealB)
+
+      # Log validation losses
+      self.log('val_gen_loss', val_gen_loss.item(), on_step=False, on_epoch=True, prog_bar=True, logger=True)
+      self.log('val_dis_loss', val_dis_loss.item(), on_step=False, on_epoch=True, prog_bar=True, logger=True)
+
+      return {"val_loss": val_gen_loss + val_dis_loss}
+  
+    
     def save_image(self, batch, batch_idx):
         imgA, imgB = batch['A'], batch['B']
         with torch.no_grad():
