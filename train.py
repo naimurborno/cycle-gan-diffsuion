@@ -3,7 +3,7 @@
 from torch.utils.data import DataLoader,random_split
 import torch
 import pytorch_lightning as pl
-from pytorch_lightning.callbacks import ModelCheckpoint
+from pytorch_lightning.callbacks import ModelCheckpoint,EarlyStopping
 import pandas as pd
 import os
 import shutil
@@ -27,7 +27,7 @@ warnings.filterwarnings(
 if __name__ == "__main__":
     # Get the config file
     config = train_config.config
-    config["n_epochs"] = config['n_lin_epoch'] + config['n_dec_epoch']
+    config["n_epochs"] =1# config['n_lin_epoch'] + config['n_dec_epoch']
     # Set Path for data
     root = config["data_path"]
     if config['paired']:
@@ -75,6 +75,13 @@ if __name__ == "__main__":
         verbose=True,
         save_top_k=-1,
     )
+    early_stopping = EarlyStopping(
+    monitor='val_gen_loss',   # Metric to monitor
+    min_delta=0.00,       # Minimum change to qualify as an improvement
+    patience=5,           # Number of epochs with no improvement after which training will be stopped
+    verbose=False,        # Verbosity mode
+    mode='min'            # Mode: 'min' for decreasing metric, 'max' for increasing metric
+    )
     # Instantiate Model
 
     # model = CycleGan(config)
@@ -91,7 +98,7 @@ if __name__ == "__main__":
         log_every_n_steps=1,
         default_root_dir=config["model_name"],
         logger=logger,
-        callbacks=[checkpoint_callback],
+        callbacks=[checkpoint_callback,early_stopping],
         # profiler="pytorch" # Enable if needed
     )
 
