@@ -27,7 +27,7 @@ warnings.filterwarnings(
 if __name__ == "__main__":
     # Get the config file
     config = train_config.config
-    config["n_epochs"] =1# config['n_lin_epoch'] + config['n_dec_epoch']
+    # config["n_epochs"] =1# config['n_lin_epoch'] + config['n_dec_epoch']
     # Set Path for data
     root = config["data_path"]
     if config['paired']:
