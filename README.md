@@ -1,45 +1,52 @@
-# 🧠 Unified Diffusion Toolkit: WSDD + Cycle‑GAN‑Diffusion
+# 🔄 Cycle‑GAN‑Diffusion
 
 [![License](https://img.shields.io/badge/license-MIT-blue)]()
 
-A unified PyTorch-based repository combining two advanced generative frameworks:
-
-- 🔁 **Cycle‑GAN‑Diffusion**: High-quality unpaired image translation using Cycle-GAN with diffusion-based refinement.
-- 💨 **WSDD – Weight‑Shared Distilled Diffusion**: A compact, fast diffusion model using progressive knowledge distillation and weight sharing.
+A **PyTorch** & **Diffusers** based framework that combines the power of Cycle-GANs with diffusion models for high-quality image-to-image translation without paired data.
 
 ---
 
 ## 📌 Table of Contents
 
-- [Project 1: WSDD](#project-1-wsdd)  
-  - [Overview](#overview)  
-  - [Installation](#installation)  
-  - [Training](#training)  
-  - [Sampling](#sampling)  
-  - [Benchmark & Results](#benchmark--results)
-- [Project 2: Cycle‑GAN‑Diffusion](#project-2-cycle-gan-diffusion)  
-  - [Overview](#overview-1)  
-  - [Installation](#installation-1)  
-  - [Training](#training-1)  
-  - [Diffusion Translation](#diffusion-translation)  
-  - [Evaluation & Metrics](#evaluation--metrics)
+- [Overview](#overview)  
+- [Key Features](#key-features)  
+- [Installation](#installation)  
+- [Usage](#usage)  
+  - [Training Cycle‑GAN](#training-cycle-gan)  
+  - [Diffusion‑Driven Translation](#diffusion-driven-translation)  
+- [Configuration](#configuration)  
+- [Examples](#examples)  
+- [Evaluation & Metrics](#evaluation--metrics)  
 - [Citation](#citation)  
 - [License](#license)  
 
 ---
 
-## 🎯 Project 1: WSDD – Weight‑Shared Distilled Diffusion
+## 📈 Overview
 
-### Overview
+This repository marries **Cycle-GAN** unsupervised domain translation with **diffusion-based refinement**, enabling:
 
-WSDD compresses standard diffusion models by:
+1. **Unpaired translation** (e.g., photo ↔ painting).
+2. **Detail enhancement** using diffusion to sharpen GAN outputs.
+3. **Modular training pipeline** for GAN and diffusion components.
 
-- Reusing weights across denoising steps.
-- Applying knowledge distillation to learn fewer but more effective steps.
-- Maintaining visual quality with up to **8× faster sampling**.
+---
 
-### Installation
+## ✨ Key Features
+
+- 🔁 Cycle-GAN backbone for unpaired domain mapping  
+- 🎯 Diffusion model for visual refinement  
+- 🧩 Hugging Face [`diffusers`](https://github.com/huggingface/diffusers)-compatible  
+- 🛠️ Options for end-to-end training or pre-trained Cycle-GAN + post-hoc diffusion  
+- ⚙️ CUDA/FP16 support  
+
+---
+
+## 🛠️ Installation
 
 ```bash
-cd wsdd
+git clone https://github.com/naimurborno/cycle-gan-diffsuion.git
+cd cycle-gan-diffsuion
+
+# Install dependencies
 pip install -r requirements.txt
